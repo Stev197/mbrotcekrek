@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CEK REKENING</title>
+  
+  <!-- Menggunakan Font Poppins agar lebih rapi dan modern -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #030308;
+      --cyan:#CFE0FF;
+      --cyan-glow: rgba(160, 190, 255, 0.55);
+      --dark-input:#2A2C48;
+      --text-main: #E4E9FF;
+      --accent: #A78BFA;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      padding: 40px 20px;
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Canvas background interaktif yang mengikuti cursor */
+    #bgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+      display: block;
+    }
+
+    /* Container Utama */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Judul Neon */
+    h1 {
+      font-weight: 800;
+      font-size: 2.5rem;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--cyan);
+      text-shadow: 
+        0 0 5px var(--cyan),
+        0 0 15px var(--cyan),
+        0 0 30px var(--cyan);
+      margin-top: 0;
+      margin-bottom: 40px;
+      line-height: 1.3;
+    }
+
+    /* Tab Switcher */
+    .tab-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .tab-btn {
+      padding: 10px 25px;
+      border: 2px solid var(--cyan);
+      background: transparent;
+      color: var(--cyan);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 15px var(--cyan-glow);
+    }
+
+    /* Grid Layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin-bottom: 25px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* Kotak Neon (Box) */
+    .neon-box {
+      background: rgba(10, 10, 10, 0.85);
+      border: 2px solid var(--cyan);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 
+        0 0 10px var(--cyan-glow),
+        inset 0 0 15px rgba(255, 210, 218, 0.1);
+      backdrop-filter: blur(5px);
+      margin-bottom: 25px;
+    }
+
+    .neon-box h2 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 25px;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--cyan);
+      text-shadow: 0 0 8px var(--cyan);
+      letter-spacing: 2px;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      color: #dddddd;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid #333333;
+      background-color: var(--dark-input);
+      color: var(--text-main);
+      font-size: 1rem;
+      font-family: 'Poppins', sans-serif;
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    button[type="submit"], .action-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: var(--cyan);
+      color: #000000;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 0 15px var(--cyan-glow);
+      transition: all 0.3s ease;
+    }
+
+    button[type="submit"]:hover, .action-btn:hover {
+      background-color: #ffffff;
+      box-shadow: 
+        0 0 20px var(--cyan),
+        0 0 40px var(--cyan);
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Area Hasil */
+    .result-container {
+      padding: 25px;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+    }
+
+    @media (max-width: 768px) {
+      .result-grid { grid-template-columns: 1fr; gap: 30px;}
+    }
+
+    .result-box-inner {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80px;
+    }
+
+    .result-box-inner h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      color: var(--cyan);
+      text-shadow: 0 0 8px var(--cyan);
+      letter-spacing: 2px;
+    }
+
+    .output-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      line-height: 1.5;
+      width: 100%;
+    }
+
+    .output-subtext {
+      font-size: 0.85rem;
+      color: #aaaaaa;
+      font-weight: 400;
+      margin-top: 5px;
+    }
+
+    /* Bulk Result Table */
+    .bulk-result-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 0.9rem;
+    }
+
+    .bulk-result-table th, .bulk-result-table td {
+      border: 1px solid #444;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .bulk-result-table th {
+      background: rgba(255, 210, 218, 0.1);
+      color: var(--cyan);
+    }
+
+    .status-success { color: #00ff88; }
+    .status-fail { color: #ff2a75; }
+
+    .loading-dot::after {
+      content: '...';
+      animation: blink 1s steps(4) infinite;
+      color: var(--cyan);
+    }
+
+    @keyframes blink {
+      0%, 20% { opacity: 0; }
+      40%, 60% { opacity: 1; }
+      80%, 100% { opacity: 0; }
+    }
+
+    .clear-btn {
+      margin-top: 15px;
+      padding: 8px 20px;
+      background-color: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-radius: 6px;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(255, 42, 117, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .clear-btn:hover {
+      background-color: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 0 15px var(--accent);
+    }
+
+    .hidden { display: none !important; }
+
+    /* Progress Bar */
+    .progress-container {
+      width: 100%;
+      background-color: #333;
+      border-radius: 10px;
+      margin: 15px 0;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background-color: var(--cyan);
+      width: 0%;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="bgCanvas"></canvas>
+
+  <div class="container">
+    <h1>CEK REKENING</h1>
+
+    <!-- Tab Switcher -->
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="switchMode('single')">Satuan</button>
+      <button class="tab-btn" onclick="switchMode('bulk')">Bulk</button>
+    </div>
+
+    <!-- MODE SATUAN -->
+    <div id="singleMode">
+      <div class="grid-2">
+        <!-- FORM BANK -->
+        <div class="neon-box">
+          <h2>BANK</h2>
+          <form id="bankForm">
+            <div class="form-group">
+              <label for="bankAccount">Nomor Rekening:</label>
+              <input type="text" id="bankAccount" required />
+            </div>
+            <div class="form-group">
+              <label for="bankCode">Kode Bank:</label>
+              <select id="bankCode">
+                <option value="014">BCA</option>
+                <option value="002">BRI</option>
+                <option value="008">MANDIRI</option>
+                <option value="009">BNI</option>
+                <option value="200">BTN</option>
+                <option value="022">CIMB NIAGA</option>
+                <option value="011">DANAMON</option>
+                <option value="013">PERMATA</option>
+                <option value="023">UOB INDONESIA</option>
+                <option value="019">PANIN BANK</option>
+                <option value="028">OCBC NISP</option>
+                <option value="426">BANK MEGA</option>
+                <option value="153">SINARMAS</option>
+                <option value="213">BTPN</option>
+                <option value="451">BSI (Bank Syariah Indonesia)</option>
+                <option value="147">MUAMALAT</option>
+                <option value="425">BJB SYARIAH</option>
+                <option value="547">BTPN SYARIAH</option>
+                <option value="535">SEABANK</option>
+                <option value="542">BANK JAGO</option>
+                <option value="567">ALLO BANK</option>
+                <option value="501">BCA DIGITAL (BLU)</option>
+                <option value="490">BANK NEO COMMERCE (BNC)</option>
+                <option value="494">BANK RAYA</option>
+                <option value="110">BANK BJB</option>
+                <option value="111">BANK DKI</option>
+                <option value="112">BPD DIY</option>
+                <option value="113">BANK JATENG</option>
+                <option value="114">BANK JATIM</option>
+                <option value="115">BANK JAMBI</option>
+                <option value="116">BANK ACEH SYARIAH</option>
+                <option value="117">BANK SUMUT</option>
+                <option value="118">BANK NAGARI</option>
+                <option value="119">BANK RIAU KEPRI</option>
+                <option value="120">BANK SUMSEL BABEL</option>
+                <option value="121">BANK LAMPUNG</option>
+                <option value="122">BANK KALSEL</option>
+                <option value="123">BANK KALBAR</option>
+                <option value="124">BANK KALTIMTARA</option>
+                <option value="125">BANK KALTENG</option>
+                <option value="126">BANK SULSELBAR</option>
+                <option value="127">BANK SULUTGO</option>
+                <option value="128">BANK NTB SYARIAH</option>
+                <option value="129">BANK BPD BALI</option>
+                <option value="130">BANK NTT</option>
+                <option value="131">BANK MALUKU MALUT</option>
+                <option value="132">BANK PAPUA</option>
+                <option value="133">BANK BENGKULU</option>
+                <option value="134">BANK SULTENG</option>
+                <option value="135">BANK SULTRA</option>
+              </select>
+            </div>
+            <button type="submit" id="btnBank">CHECK</button>
+          </form>
+        </div>
+
+        <!-- FORM E-WALLET -->
+        <div class="neon-box">
+          <h2>E-WALLET</h2>
+          <form id="ewalletForm">
+            <div class="form-group">
+              <label for="ewalletAccount">Nomor E-Wallet:</label>
+              <input type="text" id="ewalletAccount" required />
+            </div>
+            <div class="form-group">
+              <label for="ewalletCode">Kode E-Wallet:</label>
+              <select id="ewalletCode">
+                <option value="dana">DANA</option>
+                <option value="gopay">GoPay</option>
+                <option value="ovo">OVO</option>
+                <option value="shopeepay">ShopeePay</option>
+                <option value="linkaja">LinkAja</option>
+              </select>
+            </div>
+            <button type="submit" id="btnEwallet">CHECK</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- HASIL SATUAN -->
+      <div class="neon-box result-container">
+        <div class="result-grid">
+          <div class="result-box-inner">
+            <h3>BANK</h3>
+            <div id="bankOutput" class="output-text">Hasil Bank akan muncul di sini...</div>
+          </div>
+          <div class="result-box-inner">
+            <h3>E-WALLET</h3>
+            <div id="ewalletOutput" class="output-text">Hasil E-Wallet akan muncul di sini...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODE BULK -->
+    <div id="bulkMode" class="hidden">
+      <div class="neon-box">
+        <h2>BULK CHECK</h2>
+        <div class="form-group">
+          <label for="bulkType">Tipe:</label>
+          <select id="bulkType" onchange="updateBulkCodes()">
+            <option value="bank">BANK</option>
+            <option value="ewallet">E-WALLET</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="bulkCode">Kode:</label>
+          <select id="bulkCode">
+            <!-- Akan diisi via JS -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="bulkAccounts">Daftar Nomor (satu per baris):</label>
+          <textarea id="bulkAccounts" placeholder="08123456789&#10;08234567890&#10;08345678901"></textarea>
+        </div>
+        <button class="action-btn" id="btnBulk" onclick="processBulk()">CHECK BULK</button>
+      </div>
+
+      <!-- HASIL BULK -->
+      <div class="neon-box result-container">
+        <h3>HASIL BULK</h3>
+        <div id="bulkProgress" class="hidden">
+          <div class="progress-container">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+          <div style="text-align: center; margin-bottom: 10px;" id="progressText">0 / 0 Selesai</div>
+        </div>
+        <div id="bulkOutput" class="output-text">
+          <table class="bulk-result-table">
+            <thead>
+              <tr>
+                <th>Nomor</th>
+                <th>Nama Akun</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="bulkResultBody">
+              <tr>
+                <td colspan="3" style="text-align: center;">Hasil akan muncul di sini...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="text-align: center;">
+            <button class="clear-btn hidden" id="btnClearBulk" onclick="clearBulk()">HAPUS SEMUA</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ---------------------------------------------------------
+    // BACKGROUND GALAXY BERANIMASI (parallax mengikuti cursor)
+    // ---------------------------------------------------------
+    (function initGalaxyBg() {
+      const canvas = document.getElementById('bgCanvas');
+      const ctx = canvas.getContext('2d');
+      let W, H, DPR, cx, cy;
+      let stars = [];
+      let nebulaBlobs = [];
+      let t = 0;
+
+      // Posisi mouse (di-smooth/lerp supaya pergerakan galaxy halus)
+      const mouseTarget = { x: 0, y: 0 };
+      const mouseSmooth = { x: 0, y: 0 };
+      const MAX_PARALLAX = 55; // px pergeseran maksimum untuk elemen terdekat
+
+      function resize() {
+        DPR = Math.min(window.devicePixelRatio || 1, 2);
+        W = window.innerWidth;
+        H = window.innerHeight;
+        cx = W / 2;
+        cy = H * 0.48;
+        canvas.width = W * DPR;
+        canvas.height = H * DPR;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        mouseTarget.x = 0;
+        mouseTarget.y = 0;
+      }
+
+      function initField() {
+        // Blob nebula (kabut galaxy) - depth kecil = gerak lebih lambat/jauh
+        nebulaBlobs = [
+          { rx: -0.16, ry: -0.05, radius: Math.max(W, H) * 0.55, depth: 0.10, color: '80, 90, 200', alpha: 0.55 },
+          { rx: 0.18, ry: 0.06, radius: Math.max(W, H) * 0.45, depth: 0.14, color: '150, 100, 210', alpha: 0.40 },
+          { rx: -0.05, ry: 0.14, radius: Math.max(W, H) * 0.38, depth: 0.18, color: '90, 170, 220', alpha: 0.35 },
+          { rx: 0.02, ry: -0.10, radius: Math.max(W, H) * 0.30, depth: 0.22, color: '255, 200, 220', alpha: 0.18 },
+          { rx: 0, ry: 0, radius: Math.max(W, H) * 0.20, depth: 0.28, color: '255, 255, 255', alpha: 0.65 } // inti galaxy
+        ];
+
+        // Bintang tersebar dalam bentuk cakram/spiral, disimpan dalam koordinat polar
+        const count = Math.min(650, Math.floor((W * H) / 900));
+        stars = [];
+        for (let i = 0; i < count; i++) {
+          const depth = 0.3 + Math.random() * 0.9; // semakin besar = semakin "dekat"
+          const radius = Math.pow(Math.random(), 0.55) * Math.max(W, H) * 0.62;
+          const angle = Math.random() * Math.PI * 2;
+          const spiralTwist = radius * 0.006; // bikin sedikit bentuk spiral
+          stars.push({
+            angle: angle + spiralTwist,
+            radius,
+            depth,
+            size: 0.4 + Math.random() * 1.6 * depth,
+            baseAlpha: 0.25 + Math.random() * 0.65,
+            twinkleSpeed: 0.5 + Math.random() * 1.8,
+            twinklePhase: Math.random() * Math.PI * 2,
+            rotSpeed: (0.00004 + Math.random() * 0.00006) * (Math.random() < 0.5 ? 1 : -1),
+            sparkle: Math.random() < 0.035 // sebagian kecil bintang berkilau lebih besar
+          });
+        }
+      }
+
+      function drawNebula(offX, offY) {
+        for (const b of nebulaBlobs) {
+          const bx = cx + b.rx * W + offX * b.depth;
+          const by = cy + b.ry * H + offY * b.depth;
+          const grad = ctx.createRadialGradient(bx, by, 0, bx, by, b.radius);
+          grad.addColorStop(0, `rgba(${b.color}, ${b.alpha})`);
+          grad.addColorStop(0.5, `rgba(${b.color}, ${b.alpha * 0.35})`);
+          grad.addColorStop(1, `rgba(${b.color}, 0)`);
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
+
+      function drawStars(offX, offY) {
+        for (const s of stars) {
+          s.angle += s.rotSpeed * (1 + s.depth); // rotasi lambat mengelilingi inti galaxy
+          const x = cx + Math.cos(s.angle) * s.radius + offX * s.depth;
+          const y = cy + Math.sin(s.angle) * s.radius * 0.62 + offY * s.depth; // pipihkan jadi bentuk cakram
+
+          const twinkle = 0.5 + 0.5 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
+          const alpha = s.baseAlpha * (0.4 + 0.6 * twinkle);
+
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+          ctx.shadowBlur = s.sparkle ? 8 : 2.5;
+          ctx.shadowColor = `rgba(180, 210, 255, ${alpha})`;
+          ctx.arc(x, y, s.size, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (s.sparkle) {
+            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+            ctx.lineWidth = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(x - s.size * 3.5, y);
+            ctx.lineTo(x + s.size * 3.5, y);
+            ctx.moveTo(x, y - s.size * 3.5);
+            ctx.lineTo(x, y + s.size * 3.5);
+            ctx.stroke();
+          }
+        }
+        ctx.shadowBlur = 0;
+      }
+
+      function step() {
+        t += 0.016;
+
+        // Lerp posisi mouse supaya pergerakan galaxy terasa halus, bukan patah-patah
+        mouseSmooth.x += (mouseTarget.x - mouseSmooth.x) * 0.04;
+        mouseSmooth.y += (mouseTarget.y - mouseSmooth.y) * 0.04;
+        const offX = -mouseSmooth.x * MAX_PARALLAX;
+        const offY = -mouseSmooth.y * MAX_PARALLAX;
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#030308';
+        ctx.fillRect(0, 0, W, H);
+
+        drawNebula(offX, offY);
+        drawStars(offX, offY);
+
+        requestAnimationFrame(step);
+      }
+
+      function updateMouse(clientX, clientY) {
+        mouseTarget.x = (clientX / W) * 2 - 1;
+        mouseTarget.y = (clientY / H) * 2 - 1;
+      }
+
+      window.addEventListener('resize', () => {
+        resize();
+        initField();
+      });
+
+      window.addEventListener('mousemove', (e) => updateMouse(e.clientX, e.clientY));
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches[0]) {
+          updateMouse(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      resize();
+      initField();
+      requestAnimationFrame(step);
+    })();
+
+    // ---------------------------------------------------------
+    // LOGIKA TAB & MODE
+    // ---------------------------------------------------------
+    function switchMode(mode) {
+      const tabs = document.querySelectorAll('.tab-btn');
+      tabs.forEach(t => t.classList.remove('active'));
+      
+      if (mode === 'single') {
+        tabs[0].classList.add('active');
+        document.getElementById('singleMode').classList.remove('hidden');
+        document.getElementById('bulkMode').classList.add('hidden');
+      } else {
+        tabs[1].classList.add('active');
+        document.getElementById('singleMode').classList.add('hidden');
+        document.getElementById('bulkMode').classList.remove('hidden');
+        updateBulkCodes();
+      }
+    }
+
+    function updateBulkCodes() {
+      const type = document.getElementById('bulkType').value;
+      const bulkCodeSelect = document.getElementById('bulkCode');
+      const sourceSelect = type === 'bank' ? document.getElementById('bankCode') : document.getElementById('ewalletCode');
+      
+      bulkCodeSelect.innerHTML = sourceSelect.innerHTML;
+    }
+
+    
+    const MY_API_KEY = "ew_5dc5169e5abf1e7b57a27545ae735a619dc9834c";
+
+    async function validate(account, code, type) {
+      const outputDiv = type === 'bank' ? document.getElementById('bankOutput') : document.getElementById('ewalletOutput');
+      const submitBtn = type === 'bank' ? document.getElementById('btnBank') : document.getElementById('btnEwallet');
+      
+      const existingBtn = outputDiv.parentElement.querySelector('.clear-btn');
+      if (existingBtn) existingBtn.remove();
+
+      outputDiv.innerHTML = `<span class="loading-dot">Memproses</span>`;
+      submitBtn.disabled = true;
+
+      try {
+        const apiUrl = `https://app.apivalidasi.my.id/api/v3/validate?code=${code}&accountNumber=${account}&api_key=${MY_API_KEY}`;
+        const res = await fetch(apiUrl, { method: 'GET', headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+
+        if (!res.ok || data.success === false) {
+           throw new Error(data.message || `Server Error ${res.status}`);
+        }
+        
+        if (data && data.success && data.data && data.data.account_name) {
+          outputDiv.innerHTML = `
+            <span style="color: var(--cyan);">${data.data.account_name}</span>
+            <div class="output-subtext">${data.data.bank_name || code.toUpperCase()} - ${data.data.account_number}</div>
+          `;
+        } else {
+          outputDiv.innerHTML = `<span style="color: var(--accent);">Data tidak ditemukan.</span>`;
+        }
+      } catch (e) {
+        outputDiv.innerHTML = `<span style="color: var(--accent);">Error: ${e.message}</span>`;
+      } finally {
+        submitBtn.disabled = false;
+        let clearBtn = document.createElement('button');
+        clearBtn.textContent = 'HAPUS';
+        clearBtn.className = 'clear-btn';
+        clearBtn.onclick = () => {
+          outputDiv.innerHTML = type === 'bank' ? 'Hasil Bank akan muncul di sini...' : 'Hasil E-Wallet akan muncul di sini...';
+          document.getElementById(type === 'bank' ? 'bankAccount' : 'ewalletAccount').value = '';
+          clearBtn.remove();
+        };
+        outputDiv.parentElement.appendChild(clearBtn);
+      }
+    }
+
+    async function processBulk() {
+      const type = document.getElementById('bulkType').value;
+      const code = document.getElementById('bulkCode').value;
+      const accountsRaw = document.getElementById('bulkAccounts').value;
+      const accounts = accountsRaw.split('\n').map(a => a.trim()).filter(a => a !== '');
+
+      if (accounts.length === 0) {
+        alert('Masukkan nomor terlebih dahulu!');
+        return;
+      }
+
+      const btnBulk = document.getElementById('btnBulk');
+      const progressContainer = document.getElementById('bulkProgress');
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      const resultBody = document.getElementById('bulkResultBody');
+      const clearBtn = document.getElementById('btnClearBulk');
+
+      btnBulk.disabled = true;
+      progressContainer.classList.remove('hidden');
+      clearBtn.classList.add('hidden');
+      resultBody.innerHTML = '';
+
+      let completed = 0;
+      const total = accounts.length;
+      progressText.textContent = `0 / ${total} Selesai`;
+
+      // Buat semua baris tabel dulu (placeholder), lalu tembak semua request sekaligus (paralel)
+      const rows = accounts.map((account) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${account}</td><td class="loading-dot">Mengecek</td><td>-</td>`;
+        resultBody.appendChild(tr);
+        return tr;
+      });
+
+      const tasks = accounts.map((account, i) => {
+        const apiUrl = `https://app.apivalidasi.my.id/api/v3/validate?code=${code}&accountNumber=${account}&api_key=${MY_API_KEY}`;
+        return fetch(apiUrl, { method: 'GET', headers: { 'Accept': 'application/json' } })
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.success && data.data && data.data.account_name) {
+              rows[i].innerHTML = `<td>${account}</td><td class="status-success">${data.data.account_name}</td><td class="status-success">VALID</td>`;
+            } else {
+              rows[i].innerHTML = `<td>${account}</td><td class="status-fail">Tidak ditemukan</td><td class="status-fail">GAGAL</td>`;
+            }
+          })
+          .catch(() => {
+            rows[i].innerHTML = `<td>${account}</td><td class="status-fail">Error</td><td class="status-fail">ERROR</td>`;
+          })
+          .finally(() => {
+            completed++;
+            const percent = (completed / total) * 100;
+            progressBar.style.width = percent + '%';
+            progressText.textContent = `${completed} / ${total} Selesai`;
+          });
+      });
+
+      await Promise.all(tasks);
+
+      btnBulk.disabled = false;
+      clearBtn.classList.remove('hidden');
+    }
+
+    function clearBulk() {
+        document.getElementById('bulkAccounts').value = '';
+        document.getElementById('bulkResultBody').innerHTML = '<tr><td colspan="3" style="text-align: center;">Hasil akan muncul di sini...</td></tr>';
+        document.getElementById('bulkProgress').classList.add('hidden');
+        document.getElementById('btnClearBulk').classList.add('hidden');
+    }
+
+    // Event Listeners
+    document.getElementById('bankForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      validate(document.getElementById('bankAccount').value, document.getElementById('bankCode').value, 'bank');
+    });
+
+    document.getElementById('ewalletForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      validate(document.getElementById('ewalletAccount').value, document.getElementById('ewalletCode').value, 'ewallet');
+    });
+  </script>
+</body>
+</html>
